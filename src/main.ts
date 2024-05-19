@@ -7,7 +7,7 @@ import { GlobalExpectionFilter } from './filters/global-exception.filter';
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
   app.enableCors({
-    origin: ['http://localhost:5173'],
+    origin: [process.env.CLIENT_ADDRESS],
     credentials: true,
     preflightContinue: false,
   });
@@ -20,6 +20,6 @@ async function bootstrap() {
     },
   }));
   app.useGlobalFilters(new GlobalExpectionFilter(new ResponseService()));
-  await app.listen(3001);
+  await app.listen(process.env.PORT || 3001);
 }
 bootstrap();
