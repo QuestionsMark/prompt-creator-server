@@ -79,7 +79,7 @@ export class OpenAIService {
 
     private parameters: OpenAI.Chat.Completions.ChatCompletionCreateParamsNonStreaming = {
         messages: [],
-        model: 'gpt-3.5-turbo-16k-0613',
+        model: 'gpt-4o',
         n: 1,
         top_p: 0.5,
         temperature: 0.7,
@@ -223,9 +223,27 @@ export class OpenAIService {
     }
 
     async generateVariablesExamples(apiKey: string, prompt: string): Promise<ServerSuccessfullResponse<Openai.VariableExample[]>> {
+        const extractOnlyJSON = (output: string) => {
+            const prefix = '```json';
+            const postfix = '```';
+
+            console.log({
+                prefix: output.slice(0, 7).toLowerCase(),
+                postfix: output.slice(output.length - 3),
+                isJSON: output.slice(0, 7).toLowerCase() === prefix && output.slice(output.length - 3) === postfix,
+            })
+
+            if (output.slice(0, 7).toLowerCase() === prefix && output.slice(output.length - 3) === postfix) {
+                console.log(output.slice(7, output.length - 3));
+                return output.slice(7, output.length - 3);
+            }
+            return output;
+        };
+
         const validation = (json: string): boolean => {
             try {
-                const arr: Openai.VariableExample[] = JSON.parse(json);
+                const extractedJSON = extractOnlyJSON(json)
+                const arr: Openai.VariableExample[] = JSON.parse(extractedJSON);
 
                 let validation: boolean = true;
 
@@ -264,8 +282,10 @@ export class OpenAIService {
             if (!variablesExamples || !variablesExamples?.content) throw new Error();
             variablesExamplesJSON = variablesExamples.content;
 
+            console.log(variablesExamplesJSON);
+
         } while (!validation(variablesExamplesJSON))
-        return this.responseService.sendSuccessfullResponse(JSON.parse(variablesExamplesJSON));
+        return this.responseService.sendSuccessfullResponse(JSON.parse(extractOnlyJSON(variablesExamplesJSON)));
     }
 
     async getPrompts(page: number, limit: number): Promise<ServerSuccessfullResponse<Openai.CreatePromptResponse[]>> {
